@@ -8,7 +8,7 @@
       <b-collapse id="nav-text-collapse" is-nav>
         <b-navbar-nav>
           <b-nav-text class="ml-3 text-monospace">Notícias Selecionadas
-          <b-icon icon="newspaper"></b-icon>
+          <b-icon scale="1" icon="newspaper"></b-icon>
           </b-nav-text>
         </b-navbar-nav>
 
@@ -16,7 +16,7 @@
           <b-input-group size="sm" prepend="Notícias">
             <b-form-input autocomplete="off" v-model="palavra"></b-form-input>
             <b-input-group-append>
-              <b-button size="sm" text="Ok" variant="" @click="pesquisaNews">Pesquisar</b-button>
+              <b-button size="sm" text="Ok" variant="" @click="pesquistaNewsDB">Pesquisar</b-button>
             </b-input-group-append>
           </b-input-group>
         </b-navbar-nav>
@@ -44,25 +44,47 @@ export default {
   methods:{
     pesquisaNews(){
       this.$store.commit('resetNewsResult')
-      var newsArr = this.$store.getters.getNewsLista
-      for (let i= 0; i< newsArr.length;i++){
+      //procura no somente vuex News Lista que é carregada na inicialização do site
+      //const newsArr = this.$store.getters.getNewsLista
+      //ao invés de buscar no vuex, a busca será no db
+      this.$store.dispatch('getNewsDB')
+      const newsArr = this.$store.getters.getNewsLista
+      //não funciona, pois executa antes de pegar os dados
+      for (let i = 0; i < newsArr.length; i++){
         if (newsArr[i].desc.toLowerCase().includes(this.palavra.toLowerCase()) ||
               newsArr[i].content.toLowerCase().includes(this.palavra.toLowerCase()) ||
-              newsArr[i].title.toLowerCase().includes(this.palavra.toLowerCase()) ||
-              newsArr[i].author.toLowerCase().includes(this.palavra.toLowerCase())
-        ){
+              newsArr[i].title.toLowerCase().includes(this.palavra.toLowerCase()))
+        {
           this.$store.commit('setNewsResult',newsArr[i])
         }
-        // var ok = newsArr[i].desc.includes(this.palavra)
-        // var ok1 = newsArr[i].content.includes(this.palavra)
-        // if (ok || ok1){
-        //   this.$store.commit('setNewsResult',newsArr[i])
-        // }
       }
       if (this.$route.name !== 'resultadopesquisa'){
         this.$router.push({name: 'resultadopesquisa'})
       }
-
+    },
+    pesquistaNewsDB(){
+      this.$store.commit('resetNewsResult')
+      //aqui a consulta é direto no banco, mas somente no campo content
+      const dataMat = new Date().toLocaleDateString()
+      // eslint-disable-next-line no-unused-vars
+      const db = firebase.firestore().collection("materias")
+          .where('dataMat','==',dataMat)
+          .get()
+          .then((querySnapshot) =>{
+            querySnapshot.forEach((doc) => {
+              var strDB = doc.data().content
+              if (strDB.toLowerCase().includes(this.palavra.toLowerCase())){
+                console.log(doc.data())
+                this.$store.commit('setNewsResult',doc.data())
+              }
+            });
+            if (this.$route.name !== 'resultadopesquisa'){
+              this.$router.push({name: 'resultadopesquisa'})
+            }
+          })
+          .catch(function(error) {
+            console.error("Error getting documents: ", error);
+          });
     },
     signOut() {
       firebase

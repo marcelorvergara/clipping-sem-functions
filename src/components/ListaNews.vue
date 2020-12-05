@@ -38,7 +38,7 @@
       <router-link
           exact :style="{ cursor: 'grab'}"
           tag="h5" class="card-title" :to="{ name:'detalhesnews', params:{news: news}}">
-          Clique Aqui para Detalhes
+          <span class="vejamais">Veja Mais</span>
       </router-link>
       </b-carousel-slide>
     </b-carousel>
@@ -46,7 +46,6 @@
 </template>
 
 <script>
-import firebase from 'firebase'
 
 export default {
   name: "ListaNews",
@@ -58,6 +57,8 @@ export default {
     }
   },
   methods:{
+    //imagem aleatória para o fundo das notícias pagina prinicpal
+    //utilização do index para gerar dinamicamente
     getIagens(index){
       return `https://picsum.photos/1024/480?random=${index}`
     },
@@ -68,30 +69,21 @@ export default {
     // eslint-disable-next-line no-unused-vars
     onSlideEnd(slide) {
       this.sliding = false
-      },
-    getNews(){
-      this.$store.commit('resetNewsLista')
-      const dataMat = new Date().toLocaleDateString()
-        // eslint-disable-next-line no-unused-vars
-        const db = firebase.firestore().collection("materias")
-            .where('dataMat','==',dataMat)
-            .get()
-            .then((querySnapshot) =>{
-              querySnapshot.forEach((doc) => {
-                this.$store.commit('setNewsLista',doc.data())
-              });
-            })
-            .catch(function(error) {
-              console.error("Error getting documents: ", error);
-            });
-    }
+      }
   },
   created() {
-    this.getNews()
+    //carregando as notícias da base de dados
+    this.$store.dispatch('getNewsDB')
   }
 }
 </script>
 
 <style scoped>
-
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap');
+.vejamais{
+  color: white;
+  text-shadow: 2px 2px 4px #000000;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: bold;
+}
 </style>
